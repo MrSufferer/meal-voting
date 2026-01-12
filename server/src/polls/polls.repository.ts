@@ -50,11 +50,13 @@ export class PollsRepository {
     const key = `polls:${pollID}`;
 
     try {
-      await this.redisClient
-        .multi()
-        .set(key, JSON.stringify(initialPoll))
-        .expire(key, Number(this.ttl))
-        .exec();
+      await this.redisClient.send_command(
+        'JSON.SET',
+        key,
+        '.',
+        JSON.stringify(initialPoll),
+      );
+      await this.redisClient.expire(key, Number(this.ttl));
       return initialPoll;
     } catch (e) {
       this.logger.error(
@@ -111,6 +113,8 @@ export class PollsRepository {
 
       return this.getPoll(pollID);
     } catch (e) {
+      console.log(e.message);
+
       this.logger.error(
         `Failed to add a participant with userID/name: ${userID}/${name} to pollID: ${pollID}`,
       );

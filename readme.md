@@ -1,48 +1,92 @@
-## Meal Ranker
+# Meal Voting on Linera
 
-## Ranked Choice Voting Introduction
+A decentralized, multi-chain implementation of Ranked Choice Voting built on the [Linera](https://linera.dev) blockchain protocol.
 
-The project is a implementation of Ranked Choice Mathematics. You can read more about it [here](http://insights.emmanuel.edu/topics/academics/the-mathematics-of-ranked-choice-voting).
+This application allows users to create polls, nominate options, and vote using ranked choice preferences, all persisted securely on the Linera network. It utilizes Linera's microchain architecture to spawn a separate chain for each poll, ensuring scalability and parallel execution.
 
-## Running the application
+## Features
 
-In order to run the application, you will need to have some prerequisite tools installed. 
+*   **Microchain Architecture**: Every new poll spawns its own microchain (Factory Pattern).
+*   **Ranked Choice Voting**: Users rank their preferences; results are calculated on-chain.
+*   **Real-time Updates**: Frontend polls the Linera GraphQL service for state changes.
+*   **Multi-User Simulation**: Supports simulating multiple users (Admin + Participants) in a local browser environment.
 
-First, you'll need to be able to run `docker-compose` command. If you are able to install Docker with Docker Desktop, that is probably the easiest solution.
+## Prerequisites
 
-Second, you'll need NodeJS for both the client and server applications. I recommend you use [nvm](https://github.com/nvm-sh/nvm) or [nvm-windows](https://github.com/coreybutler/nvm-windows) and make sure to use the same version of node found in the [.nvmrc](/.nvmrc) file at the root of the project. You can run `nvm use` from the root of the project to make sure you're using the same version of node as me. 
+1.  **Rust & Wasm**:
+    *   Install Rust: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+    *   Add Wasm target: `rustup target add wasm32-unknown-unknown`
+2.  **Linera SDK**:
+    *   Install Linera CLI: `cargo install linera-service --features storage-service`
+    *   (Or follow the [Linera Installation Guide](https://linera.dev/developers/getting_started/installation.html))
+3.  **Node.js**:
+    *   For the React frontend.
 
-With the everything installed and with Docker running on your machine, you can launch a docker container running `redis-json`, the backend Nest JS application, and the front-end react application by running the following from the root of the project.
+## Getting Started
 
-```sh
-npm run start
+### 1. Build the Contract
+
+Compile the Linera contract and service into WebAssembly.
+
+```bash
+cd linera/meal_voting
+cargo build --release --target wasm32-unknown-unknown
 ```
 
-The project root's `package.json` file and its npm scripts are basically just for convenience of running all applications and a database at once.
+### 2. Start the Linera Service
 
-You can also run these applications separately by running the appropriate npm scripts inside of each project's `package.json` file. 
+Run a local Linera service to handle chain operations and GraphQL requests.
 
-## Links to Tools and Frameworks
+```bash
+# In the linera directory (or root)
+linera service --port 8081
+```
 
-### General
-* [Typescript](https://www.typescriptlang.org/)
-* [Docker](https://www.docker.com/products/docker-desktop)
-* [Prettier](https://prettier.io/)
-* [ESLint](https://eslint.org/docs/user-guide/getting-started)
+### 3. Deploy the Application
 
-### Frontend Application
-* [Vite](https://vitejs.dev/)
-* [React](https://reactjs.org/)
-* [Valtio](https://github.com/pmndrs/valtio)
-* [Wouter](https://github.com/molefrog/wouter)
-* [Storybook](https://storybook.js.org/)
-* [Socket.io Client](https://socket.io/docs/v4/client-api/)
-* [Tailwind CSS](https://tailwindcss.com/)
-* [react-use](https://github.com/streamich/react-use)
+Publish the bytecode and create the application on a chain.
 
-### Backend Application
-* [NestJS](https://nestjs.com/)
-* [Socket.io Server](https://socket.io/docs/v4/server-api/)
-* [Redis-JSON](https://oss.redis.com/redisjson/)
-* [Redis-JSON Docker Image](https://hub.docker.com/r/redislabs/rejson/)
-* [JSON Web Token](https://jwt.io/)
+```bash
+# From the linera/ folder
+linera publish-and-create \
+  ./meal_voting/target/wasm32-unknown-unknown/release/meal_voting_contract.wasm \
+  ./meal_voting/target/wasm32-unknown-unknown/release/meal_voting_service.wasm \
+  --json-argument "null"
+```
+
+**Note the App ID**: The command will output a long hexadecimal string (e.g., `e421...`). Copy this ID.
+
+### 4. Configure the Frontend
+
+Update the client environment variables with your deployed App ID.
+
+```bash
+# client/.env
+VITE_LINERA_SERVICE_URL=http://localhost:8081
+VITE_LINERA_CHAIN_ID=<YOUR_DEFAULT_CHAIN_ID>  # Usually inferred or set automatically
+VITE_LINERA_APPLICATION_ID=<YOUR_APP_ID_FROM_STEP_3>
+```
+
+### 5. Run the Client
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+Open your browser to `http://localhost:5173`.
+
+## Architecture Details
+
+*   **Factory Pattern**: The main application ID acts as a "factory". When a user clicks "Create Poll", the contract sends an `OpenChain` command to the runtime, spawning a *new* microchain specifically for that poll.
+*   **State Management**:
+    *   **Frontend**: Uses `Valtio` for reactive state, customized with a `LineraStateAdapter` to bridge GraphQL data to the UI.
+    *   **Backend**: Rust contract manages `PollState`, including participants, nominations, and rankings using `MapView` for efficient storage.
+*   **Identity**: Uses simulated local browser identity (`linera_user_id` in localStorage) to allow testing multi-user scenarios on a single node.
+
+## Legacy (Socket.IO Version)
+
+*To run the deprecated Node.js/Redis version:*
+1.  Ensure Redis is running (`docker-compose up`).
+2.  Run `npm run start` in root.

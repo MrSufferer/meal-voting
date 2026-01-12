@@ -18,6 +18,13 @@ const App: React.FC = () => {
 
     actions.startLoading();
 
+    // Restore Linera identity if available
+    const lineraUserId = localStorage.getItem('linera_user_id');
+    const lineraUserName = localStorage.getItem('linera_user_name');
+    if (lineraUserId) {
+      actions.setLineraUser(lineraUserId, lineraUserName || 'Admin');
+    }
+
     const accessToken = localStorage.getItem('accessToken');
 
     // if there's not access token, we'll be shown the default

@@ -47,8 +47,6 @@ export type AppState = {
   canStartVote: boolean;
   hasVoted: boolean;
   rankingsCount: number;
-  lineraUserId?: string;
-  lineraUserName?: string;
 };
 
 const state = proxy<AppState>({
@@ -57,11 +55,10 @@ const state = proxy<AppState>({
   wsErrors: [],
   get me() {
     if (USE_LINERA) {
-      if (this.lineraUserId) {
-        return {
-          id: this.lineraUserId,
-          name: this.lineraUserName || 'Admin',
-        };
+      const id = localStorage.getItem('linera_user_id');
+      const name = localStorage.getItem('linera_user_name') || 'Admin'; // Fallback
+      if (id) {
+        return { id, name: name };
       }
       return undefined;
     }
@@ -122,10 +119,6 @@ const actions = {
   },
   setPollAccessToken: (token?: string): void => {
     state.accessToken = token;
-  },
-  setLineraUser: (id: string, name: string): void => {
-    state.lineraUserId = id;
-    state.lineraUserName = name;
   },
   initializeSocket: (): void => {
     // Skip Socket.IO when using Linera - we use polling instead
