@@ -66,8 +66,8 @@ function mapLineraStateToPoll(lineraState: PollStateResponse, existingPoll?: Pol
  * Get or create a Linera client with optional configuration.
  */
 export function getLineraClient(chainId?: string, applicationId?: string): LineraClient {
-    if (!currentClient || (chainId && applicationId)) {
-        currentClient = new LineraClient({ chainId, applicationId });
+    if (!currentClient || applicationId) {
+        currentClient = new LineraClient({ applicationId });
     }
     return currentClient;
 }
