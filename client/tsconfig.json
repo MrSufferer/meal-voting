@@ -1,9 +1,19 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "shared/*": [
+        "../shared/*"
+      ]
+    },
     "target": "ESNext",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
+    ],
     "allowJs": false,
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
@@ -15,7 +25,12 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react",
-    "types": ["@types/jest"]
+    "types": [
+      "@types/jest"
+    ]
   },
-  "include": ["./src", "./jest-setup.ts"]
+  "include": [
+    "./src",
+    "./jest-setup.ts"
+  ]
 }

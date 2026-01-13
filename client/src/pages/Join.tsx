@@ -45,7 +45,7 @@ const Join: React.FC = () => {
         // The pollID contains both chainId and appId separated by ':'
         // Format: chainId:appId or just chainId (will try to get appId)
         let chainId = pollID;
-        let appId = LINERA_APPLICATION_ID;
+        let appId = LINERA_APPLICATION_ID as string | undefined;
 
         if (pollID.includes(':')) {
           [chainId, appId] = pollID.split(':');
